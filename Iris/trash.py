@@ -246,25 +246,39 @@ from sklearn.datasets import load_iris
 
 
 
-iris = load_iris()
-samples = iris.data
-C = 3
-Nc = 50
-flowers = []
-_, axes = plt.subplots()
-for i in range(C):
-    flowers.append(samples[Nc*i:Nc*(i+1)])
+# iris = load_iris()
+# samples = iris.data
+# C = 3
+# Nc = 50
+# flowers = []
+# _, axes = plt.subplots()
+# for i in range(C):
+#     flowers.append(samples[Nc*i:Nc*(i+1)])
 
-featuresTxt = ["Sepal length", "Sepal width", "Petal length", "Petal width"]
-flowersTxt = ["Setosa", "Versicolor", "Virginica"]
+# featuresTxt = ["Sepal length", "Sepal width", "Petal length", "Petal width"]
+# flowersTxt = ["Setosa", "Versicolor", "Virginica"]
 
-featOne = 0
-featThree = 2
+# featOne = 0
+# featThree = 2
 
-for i,flower in enumerate(flowersTxt):
-    axes.scatter(flowers[i][:,featOne],flowers[i][:,featThree], label = flower) 
-axes.set(xlabel = featuresTxt[featOne] + " in cm", ylabel = featuresTxt[featThree] + " in cm")
-axes.legend()
-# plt.show()
+# for i,flower in enumerate(flowersTxt):
+#     axes.scatter(flowers[i][:,featOne],flowers[i][:,featThree], label = flower) 
+# axes.set(xlabel = featuresTxt[featOne] + " in cm", ylabel = featuresTxt[featThree] + " in cm")
+# axes.legend()
+# # plt.show()
 
-print(iris.target)
+# print(iris.target)
+
+
+# plt.rcParams["figure.figsize"] = [7.50, 3.50]
+# plt.rcParams["figure.autolayout"] = True
+
+def sigmoidScalar(x):
+    return 1/(1 + np.exp(-x))
+
+_, ax = plt.subplots()
+x = np.linspace(-10, 10, 100)
+ax.plot(x, sigmoidScalar(x))
+ax.grid(alpha=0.4)
+
+ax.show()

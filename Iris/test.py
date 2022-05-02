@@ -188,11 +188,15 @@ def confusion(W, samples, labels):
         trueLabel = np.argmax(labels[i])
         clasLabel = np.argmax(classifiedLabels[i])
         confusionMatrix[trueLabel][clasLabel] += 1    
-    return confusionMatrix
+    ##
+    errorRateVal = errorRate(classifiedLabels, labels)
+    ##
+    
+    return confusionMatrix, errorRateVal
 
 
 # Plots confusion matrices for a training and testing set, respectively 
-def plotConfusionMatrices(trainConfMat, testConfMat):
+def plotConfusionMatrices(trainConfMat, trainErrorRate, testConfMat, testErrorRate):
     labelsStringVec = ["Setosa", "Versicolor", "Virginica"]
 
     _, axes = plt.subplots(1,2, figsize=(10,4))
@@ -200,10 +204,12 @@ def plotConfusionMatrices(trainConfMat, testConfMat):
     confVec = [trainConfMat,testConfMat]
     confVecNames = ["Training set", "Test set"]
 
+    errorRates = [trainErrorRate, testErrorRate]
+
     for i in range (2):
         disp = ConfusionMatrixDisplay(confusion_matrix=confVec[i], display_labels=labelsStringVec)
         disp.plot(ax=axes[i])
-        disp.ax_.set_title(confVecNames[i])
+        disp.ax_.set_title(f"{confVecNames[i]} \nEroor rate {round(errorRates[i]*100,1)} %")
         disp.im_.colorbar.remove()
     plt.subplots_adjust(wspace=0.40)
     plt.show() 
@@ -315,11 +321,11 @@ def run(lastThirtyBool,showDifferentAlphasBool, numberOfFeatures):
     trainedW, _, _ = trainClassifier(W, numberOfIterations, alpha, trainLabels, trainSamples)    
 
     # Generate confusion matrices
-    trainsetConfusionMatrix = confusion(trainedW, trainSamples, trainLabels) # print(trainsetConfusionMatrix)
-    testsetConfusionMatrix = confusion(trainedW, testSamples, testLabels) # print(testsetConfusionMatrix)
+    trainsetConfusionMatrix, trainErrorRate = confusion(trainedW, trainSamples, trainLabels) # print(trainsetConfusionMatrix)
+    testsetConfusionMatrix, testErrorRate = confusion(trainedW, testSamples, testLabels) # print(testsetConfusionMatrix)
 
     # Plot the confusion matrices 
-    plotConfusionMatrices(trainsetConfusionMatrix,testsetConfusionMatrix)
+    plotConfusionMatrices(trainsetConfusionMatrix,trainErrorRate,testsetConfusionMatrix,testErrorRate)
 
 
 # Menu
@@ -334,7 +340,7 @@ menuOpts = {
     8: 'Close',
 }
 
-showDifferentAlphasBool = 1 # Was turned of during testing to save computational power 
+showDifferentAlphasBool = 0 #1 # Was turned of during testing to save computational power 
 loop = True
 
 while loop:
