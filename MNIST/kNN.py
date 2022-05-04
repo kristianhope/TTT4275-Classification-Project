@@ -1,9 +1,8 @@
 import numpy as np
 import scipy.io as sio
-import math
-import plotting as plot
-import string
 import matplotlib.pyplot as plt
+import math
+import string
 import timeit
 from cgi import test
 from scipy.spatial import distance
@@ -30,21 +29,29 @@ def createClusters(M, data, labels, nrClasses = 10, vecSize = 784):
             labels[i*M + j] = i
     return clusters, labels
 
-def EuclideanDistance(array1, array2):
-    distance = 0
-    for i in range(len(array2)):
-        distance += (int(array1[i]) - int(array2[i]))**2
-    return np.sqrt(distance)
+def NN(trainData, labels, test):
+    distances = [] #[(distance, label),...]
+    for i in range(len(trainData)):
+        distances.append((np.linalg.norm(trainData[i]-test),labels[i]))
+    distances = sorted(distances,key=lambda tup: tup[0])
+    nn = distances[0][1]
+    return nn
+
+def NN_Classification(trainData, labels, testData):
+    result = np.array([],int)
+    for test in testData:
+        nn = NN(trainData, labels, test)
+        result = np.append(result,nn)
+    return result
 
 def kNN(trainData, labels, test,k):
     distances = [] #[(distance, label),...]
     for i in range(len(trainData)):
-        #distances.append((EuclideanDistance(test,trainData[i]),labels[i]))
         distances.append((np.linalg.norm(trainData[i]-test),labels[i]))
     distances = sorted(distances,key=lambda tup: tup[0])
     kNearest = distances[0:k]
-    labels = [el[1] for el in kNearest]
-    return labels
+    kNearestLabels = [el[1] for el in kNearest]
+    return kNearestLabels
 
 def findMajority(kNearest):
     frequencies = [0 for i in range(10)]
@@ -62,14 +69,13 @@ def kNN_Classification(trainData, labels, testData, k):
         result = np.append(result,majority)
     return result
 
-
 def ConfusionMatrix(testLabels, classified):
-    confusionMatrix = np.zeros((10,10))
+    confusionMatrix = np.zeros((10,10),int)
     for i in range(len(classified)):
         if classified[i] == testLabels[i]:
             confusionMatrix[classified[i]][classified[i]] += 1
         else:
-            confusionMatrix[classified[i]][testLabels[i]] += 1
+            confusionMatrix[testLabels[i]][classified[i]] += 1
     return confusionMatrix
 
 def ErrorRate(testLabels, classified):
@@ -84,9 +90,3 @@ def ErrorRate(testLabels, classified):
 
             
 
-
-
-
-#index = classDict[0][kmeans.labels_==2]
-#im = Image.fromarray(index[8].reshape(28,28))
-#im.save("test.png")
