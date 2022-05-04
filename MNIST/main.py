@@ -41,10 +41,10 @@ def main():
     TEST_CHUNK_SIZE = 100
     TRAIN_CHUNK_SIZE = 60000
     NUM_CLUSTERS = 64
-
+    print("Loading data...")
     testData,trainData,testLabels,trainLabels = dt.loadData('MNIST/data_all.mat')
     testDataChunks,testLabelsChunks,trainDataChunks,trainLabelsChunks = dt.createDataChunks(TEST_CHUNK_SIZE,TRAIN_CHUNK_SIZE,testData,testLabels,trainData,trainLabels)
-
+    print("Data loaded")
     while True:
         fullTest = input("Use full datasets? 1/0\n")
         if int(fullTest) == 0:
