@@ -2,14 +2,9 @@ from sklearn.datasets import load_iris
 from sklearn.metrics import ConfusionMatrixDisplay
 import numpy as np
 import matplotlib.pyplot as plt
+# from testfunctions import hitOrMissTest
 
-# Just for testeing: Print the iris data set 
-def printDataSet(dataSet):
-    for i,element in enumerate(dataSet):
-        print(i+1 , ":" , element)    
-
-
-# Add a 1 at the end of each sample 
+# Append a 1 at the end of each sample 
 def augmentData(dataSet):
     N = np.shape(dataSet)[0]
     D = np.shape(dataSet)[1]
@@ -19,13 +14,13 @@ def augmentData(dataSet):
         augmentedDataSet[i] = np.append(sample,[1])
 
     return augmentedDataSet 
-    
+
 
 # Takes in a data set and returns a splited version, all as 2D numpy-arrays
-def splitDataIntoTrainigAndTest(dataSet, labelSet, lastThirtyBool):
-    Nc = 50 #samplesOfEachClass
-    C = 3 #numberOfClasses
-    splitIndex = 30
+def splitDataIntoTrainigAndTest(samples, labels, lastThirtyBool):
+    Nc = 50             # samples of each class
+    C = 3               # number of classes
+    splitIndex = 30 
 
     if lastThirtyBool:
         splitIndex = 20
@@ -38,11 +33,11 @@ def splitDataIntoTrainigAndTest(dataSet, labelSet, lastThirtyBool):
     for i in range(Nc):
         for j in range(C):
             if i < splitIndex:
-                trainingSamples.append(dataSet[i + Nc*j])
-                trainingLabels.append(labelSet[i + Nc*j])
+                trainingSamples.append(samples[i + Nc*j])
+                trainingLabels.append(labels[i + Nc*j])
             else:
-                testSamples.append(dataSet[i + Nc*j])
-                testLabels.append(labelSet[i + Nc*j])
+                testSamples.append(samples[i + Nc*j])
+                testLabels.append(labels[i + Nc*j])
 
     # Make array into numpy array
     trainingSamples = np.array(trainingSamples)
@@ -61,12 +56,12 @@ def splitDataIntoTrainigAndTest(dataSet, labelSet, lastThirtyBool):
 
 # One-Hot encoding of (vector of) classes
 # Takes in classes reperesented by a scalar and returns a vector reperesentastion 
-def oneHotEncoding(labelset):
-    N = np.shape(labelset)[0]
+def oneHotEncoding(labels):
+    N = np.shape(labels)[0]
     C = 3
 
     labelVectorSet = np.zeros((N,C))
-    for i,clas in enumerate(labelset):
+    for i,clas in enumerate(labels):
         # if clas == 0: labelVectorSet[i] = [1,0,0]
         # elif clas == 1: labelVectorSet[i] = [0,1,0]
         # else: #clas == 2: labelVectorSet[i] = [0,0,1]
@@ -136,13 +131,13 @@ def trainClassifier(initialW, numberOfIterations, alpha, labels, samples):
     mseVec = np.zeros((numberOfIterations,1))
     errorRateVec = np.zeros((numberOfIterations,1))
 
-    for i in range(numberOfIterations):
+    for m in range(numberOfIterations):
         trainClassifiedLabels = classifySamples(W,samples)
         W = improveW(W,alpha,trainClassifiedLabels,labels,samples )
 
         # Recording the performance/improvement
-        mseVec[i] = MSE(trainClassifiedLabels,labels)
-        errorRateVec[i] = errorRate(binaryClassifySamples(trainClassifiedLabels), labels)
+        mseVec[m] = MSE(trainClassifiedLabels,labels)
+        errorRateVec[m] = errorRate(binaryClassifySamples(trainClassifiedLabels), labels)
 
     return W, mseVec, errorRateVec
 
@@ -167,16 +162,6 @@ def errorRate(classifiedLabels, trueLabels):
     return errors/N 
 
 
-# Just for testeing - A simple test for cheching how each sample is classified wrt the true labels
-def HitOrMissTest(trueLabels, classifiedLabels):
-    N = np.shape(trueLabels)[0]
-    for i in range(N):
-        if (trueLabels[i] == classifiedLabels[i]).all():
-            print("Hit")
-        else:
-            print("Miss:",trueLabels[i], "was wrongly classified as", classifiedLabels[i])
-  
-
 # Returns a confusion matrix based on w, a set of samples and it's true labels 
 def confusion(W, samples, labels):
     N = np.shape(labels)[0]
@@ -188,11 +173,14 @@ def confusion(W, samples, labels):
         trueLabel = np.argmax(labels[i])
         clasLabel = np.argmax(classifiedLabels[i])
         confusionMatrix[trueLabel][clasLabel] += 1    
-    return confusionMatrix
+
+    errorRateVal = errorRate(classifiedLabels, labels)
+    
+    return confusionMatrix, errorRateVal
 
 
 # Plots confusion matrices for a training and testing set, respectively 
-def plotConfusionMatrices(trainConfMat, testConfMat):
+def plotConfusionMatrices(trainConfMat, trainErrorRate, testConfMat, testErrorRate):
     labelsStringVec = ["Setosa", "Versicolor", "Virginica"]
 
     _, axes = plt.subplots(1,2, figsize=(10,4))
@@ -200,10 +188,12 @@ def plotConfusionMatrices(trainConfMat, testConfMat):
     confVec = [trainConfMat,testConfMat]
     confVecNames = ["Training set", "Test set"]
 
+    errorRates = [trainErrorRate, testErrorRate]
+
     for i in range (2):
         disp = ConfusionMatrixDisplay(confusion_matrix=confVec[i], display_labels=labelsStringVec)
         disp.plot(ax=axes[i])
-        disp.ax_.set_title(confVecNames[i])
+        disp.ax_.set_title(f"{confVecNames[i]} \nEroor rate {round(errorRates[i]*100,1)} %")
         disp.im_.colorbar.remove()
     plt.subplots_adjust(wspace=0.40)
     plt.show() 
@@ -226,7 +216,7 @@ def plotMseAndErrorRate(alphas, mseVecs, errorRateVecs):
         # axes[1].set_title('Error rate')
         axes[1].plot(iterationsVec, errorRateVec, label = "α = " + str(alphas[i]))
         axes[1].set(xlabel = 'Number of iterations', ylabel = 'Error rate') 
-        axes[1].legend()
+        axes[1].legend() # Not necessary in both of the subplots - May be removed in one of them
 
     plt.show()
 
@@ -256,7 +246,7 @@ def plotFeatureHistogram():
     featuresTxt = ["Sepal length", "Sepal width", "Petal length", "Petal width"]
     flowersTxt = ["Setosa", "Versicolor", "Virginica"]
 
-    _, axes = plt.subplots(2, 2, figsize = (8,7))
+    _, axes = plt.subplots(2, 2, figsize = (7,6))
     for i,feature in enumerate(featuresTxt):
         for j,flower in enumerate(flowersTxt):
             axes.flat[i].hist(flowers[j][:,i], label = flower, alpha = 0.65)
@@ -286,7 +276,7 @@ def run(lastThirtyBool,showDifferentAlphasBool, numberOfFeatures):
     elif numberOfFeatures == 12:
         samples = np.delete(samples, [0,1,3], 1)
 
-    # Add a 1 at the end of each sample 
+    # Append a 1 at the end of each sample 
     augmentedIris = augmentData(samples)
 
     # Split the data into traing and test, both into sets of samplels and labels   
@@ -304,22 +294,24 @@ def run(lastThirtyBool,showDifferentAlphasBool, numberOfFeatures):
     W = np.zeros((C, D+1))
 
     # Test different alphas and number of iterations 
-    alphas = [0.1, 0.05, 0.01, 0.005, 0.001, 0.0005]
+    alphas = [0.05, 0.01, 0.005, 0.001, 0.0005] # Interesting alphas
     numberOfIterations = 2000  # Chosen based on a comprehensive testing    
     if showDifferentAlphasBool:
         mseVecs, errorRateVecs = testDifferentAlphas(W,alphas,numberOfIterations,trainLabels,trainSamples)
         plotMseAndErrorRate(alphas, mseVecs, errorRateVecs)
     
     # Train the classifier (again) with the chosen alpha (and number of iterations) based on testing 
-    alpha = alphas[2]
-    trainedW, _, _ = trainClassifier(W, numberOfIterations, alpha, trainLabels, trainSamples)    
+    alpha = alphas[1] # = 0.01
+    trainedW, _, _ = trainClassifier(W, numberOfIterations, alpha, trainLabels, trainSamples)
+
+    # hitOrMissTest(trainLabels, binaryClassifySamples(classifySamples(trainedW,trainSamples)))    
 
     # Generate confusion matrices
-    trainsetConfusionMatrix = confusion(trainedW, trainSamples, trainLabels) # print(trainsetConfusionMatrix)
-    testsetConfusionMatrix = confusion(trainedW, testSamples, testLabels) # print(testsetConfusionMatrix)
+    trainsetConfusionMatrix, trainErrorRate = confusion(trainedW, trainSamples, trainLabels) # print(trainsetConfusionMatrix)
+    testsetConfusionMatrix, testErrorRate = confusion(trainedW, testSamples, testLabels) # print(testsetConfusionMatrix)
 
     # Plot the confusion matrices 
-    plotConfusionMatrices(trainsetConfusionMatrix,testsetConfusionMatrix)
+    plotConfusionMatrices(trainsetConfusionMatrix,trainErrorRate,testsetConfusionMatrix,testErrorRate)
 
 
 # Menu
@@ -331,7 +323,8 @@ menuOpts = {
     5: 'Take away Sepal width and lenght',
     6: 'Take away Sepal width and lenght, and Petal length',
     7: 'Take away Sepal width and lenght, and Petal width ',
-    8: 'Close',
+    8: 'Toggle if plot of MSE and error rate should be shown for different alphas',
+    9: 'Close'
 }
 
 showDifferentAlphasBool = 1 # Was turned of during testing to save computational power 
@@ -346,9 +339,12 @@ while loop:
     print('\nMenu options:')
     for key in menuOpts.keys():
         print(' ', key, '-', menuOpts[key])
+    if showDifferentAlphasBool: 
+        print("Plots showing MSE and error rate for different alphas will be shown")
+    else:
+        print("Plots showing MSE and error rate for different alphas will not be shown")
 
     option = int(input('Enter your number: '))
-
     if option == 1:
         run(lastThirtyBool,showDifferentAlphasBool, numberOfFeatures)
 
@@ -376,8 +372,16 @@ while loop:
         run(lastThirtyBool,showDifferentAlphasBool, numberOfFeatures)
     
     elif option == 8:
+        if showDifferentAlphasBool:
+            showDifferentAlphasBool = 0
+            print("Plotting of different alphas turned off")
+        else:
+            showDifferentAlphasBool = 1
+            print("Plotting of different alphas turned on")
+    
+    elif option == 9:
         print('Closing')
         loop = False
 
     else:
-        print('Invalid option. Valid inputs are numbers between 1 and 8')
+        print('Invalid option. Valid inputs are numbers between 1 and 9')
